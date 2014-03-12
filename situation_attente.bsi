@@ -1,0 +1,171 @@
+[Description]
+Protection=
+Filename=
+LongueurFixe=NON
+LongueurData=0
+StartLength=0
+Delimitor=0
+Separator=59
+FormatDate=dd/MM/yyyy
+Ascii=NON
+MajAlpha=NON
+CalculInfos=OUI
+DerniereModif=NON
+VerificationXML = NON
+AjouteHeureFichierBSC = NON
+FormuleHTTP = 
+DbUser=
+DbPasswd=
+DBAutoConnect=NON
+TimerExecute=0
+Version=6
+DateVersion=41628,6037485764
+DateVersionS=20/12/2013 14:29:23
+FileKind=2
+[FIELDS]
+[SQLEXT]
+[FICINC]
+[SCRIPT]
+local$ Idsession
+local$ action
+local$ contrat
+
+!action := I1
+ECRAN(!action)
+
+IZX := VRAI  //
+//exec controledossier(!action)
+//SI IZ = FAUX ; FIN
+
+SI !action = "AJOUT_SITATT" ;>AJOUT_SITATT
+si !action = "CONTSITATT";>CONTSITATT
+
+ECRAN("action inconnue !!!")
+FIN
+
+//===================
+//Situation d'attente
+//===================
+:AJOUT_SITATT
+
+//On se place sur le contrat
+!contrat := ?DATA("contrat")
+SI !contrat = 0 ;ERREUR("le N° de contrat non indiqué")
+RECPIECE(!contrat,-1)
+SI RESULT = 0 ;ERREUR("contrat "+!contrat+" non trouvé")
+
+//On ouvre les situations
+
+
+
+XML:OPEN("situations_attente")
+SI RESULT = 0 ;>SITUATIONS_FIN
+
+
+:SITUATION_OPEN
+XML:OPEN("situation")
+
+:SITUATION_LOOP
+SI RESULT = 0 ;>SITUATION_FIN
+IB$ := ?DATA("$code")
+
+SI IB = "" ;>SITUATION_NEXT
+
+NEW("CONATT")
+?CONATT("B_CONTRAT") := !contrat
+?CONATT("B_CODEATT") := IB
+?CONATT("B_DATEATT") := ?PIEC("B_EFFET")
+OK
+
+:SITUATION_NEXT
+XML:NEXT("situation")
+>SITUATION_LOOP
+
+:SITUATION_FIN
+XML:CLOSE("situation")
+
+:SITUATIONS_FIN
+XML:CLOSE("situations_attente")
+
+FIN
+
+
+
+:CONTSITATT
+XA := ?data("contrat")
+
+sql:new(s)
+*select c.*, c2.b_libatt from [conatt] c inner join [catt] c2 on c.b_codeatt = c2.b_codeatt where b_contrat = :XA
+sql:open(s)
+printxml("<conatts>")
+printxml(xmldata("conatt", "sqls"))
+printxml("</conatts>")
+sql:free(s)
+
+
+FIN
+
+
+
+
+
+
+
+
+//=======================================
+// Descriptif du XML d'entrée
+//=======================================
+<!--
+SITATT
+
+Script : situation_attente.BSI
+Action : "AJOUT_SITATT"
+Entree :
+<contrat>XXXX</contrat>
+<situations_attente>
+    <situation code="A" />
+    <situation code="B" />
+</situations_attente>
+
+-->
+
+
+
+
+
+//=======================================
+// Descriptif du XML d'entrée pour CONTSITATT
+//=======================================
+<!--
+CONTSITATT
+
+Script : situation_attente.BSI
+Action : "CONTSITATT"
+Entree :
+<contrat>XXXX</contrat>
+
+-->
+[ACTIONS]
+(AJOUT_SITATT)
+//=======================================
+// Descriptif du XML d'entrée
+//=======================================
+<!--
+SITATT
+
+Script : situation_attente.BSI
+Action : "AJOUT_SITATT"
+Entree :
+<contrat>XXXX</contrat>
+<situations_attente>
+    <situation code="A" />
+    <situation code="B" />
+</situations_attente>
+
+-->
+
+
+
+(CONTSITATT)
+Affiche les situations d'attente d'un contrat
+paramères : contrat=[numéro de contrat]
