@@ -54,7 +54,7 @@ SI !contrat = 0 ;ERREUR("le N° de contrat non indiqué")
 RECPIECE(!contrat,-1)
 SI RESULT = 0 ;ERREUR("contrat "+!contrat+" non trouvé")
 
-//On ouvre les situations
+//On ouvre les situations attente
 
 
 
